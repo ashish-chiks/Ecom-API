@@ -1,19 +1,24 @@
 const jwt = require("jsonwebtoken");
 const { UnauthenticatedError } = require("../errors");
 
-const auth = (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer "))
-    throw new UnauthenticatedError("authentication failed");
-
-  const token = header.split(" ")[1];
+const authenticateUser = (req, res, next) => {
+  const token = req.signedCookies.token;
+  if (!token)
+    throw new UnauthenticatedError(
+      "Authentication failed! Please log in again"
+    );
   try {
-    const { userId, name } = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    req.user = { userId, name };
+    const { userId, name, role } = jwt.verify(
+      token,
+      process.env.JWT_SECRET_KEY
+    );
+    req.payload = { userId, name, role };
     next();
   } catch (error) {
-    throw new UnauthenticatedError("authentication failed");
+    throw new UnauthenticatedError(
+      "Authentication Invalid! Token verification failed"
+    );
   }
 };
 
-module.exports = auth;
+module.exports = authenticateUser;
