@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 require("dotenv").config();
 require("express-async-errors");
+const cookieParser = require("cookie-parser");
 
 //db
 const connectDB = require("./db/connect");
@@ -13,6 +14,7 @@ const { authRouter } = require("./routes");
 
 //middlewares
 app.use(express.json());
+app.use(cookieParser(process.env.JWT_SECRET_KEY));
 
 //routes
 const base_url = "/api/v1";
