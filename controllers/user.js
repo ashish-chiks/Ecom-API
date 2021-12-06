@@ -21,12 +21,30 @@ const showCurrentUser = async (req, res) => {
   res.status(StatusCodes.OK).json({ user: req.payload });
 };
 
-const updateUser = async (req, res) => {
-  res.send("update user");
+const updateUser = async (req, res, next) => {
+  const { name, email } = req.body;
+  if (!name || !email)
+    throw new BadRequestError("please provide name and email");
+  const user = await userModel.findByIdAndUpdate(req.payload.userId, req.body, {
+    runValidators: true,
+    new: true,
+  });
+  req.user = user;
+  next();
 };
 
 const updatePassword = async (req, res) => {
-  res.send("update password");
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword)
+    throw new BadRequestError("please provide both passwords");
+
+  const user = await userModel.findById(req.payload.userId);
+  const checkPassword = await user.comparePassword(oldPassword);
+
+  if (!checkPassword) throw new UnauthenticatedError("wrong current password");
+  user.password = newPassword;
+  await user.save();
+  res.status(StatusCodes.CREATED).json({});
 };
 
 module.exports = {
