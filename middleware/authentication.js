@@ -1,24 +1,34 @@
-const jwt = require("jsonwebtoken");
-const { UnauthenticatedError } = require("../errors");
+const CustomError = require('../errors');
+const { isTokenValid } = require('../utils');
 
-const authenticateUser = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
   const token = req.signedCookies.token;
-  if (!token)
-    throw new UnauthenticatedError(
-      "Authentication failed! Please log in again"
-    );
+
+  if (!token) {
+    throw new CustomError.UnauthenticatedError('Authentication Invalid');
+  }
+
   try {
-    const { userId, name, role } = jwt.verify(
-      token,
-      process.env.JWT_SECRET_KEY
-    );
-    req.payload = { userId, name, role };
+    const { name, userId, role } = isTokenValid({ token });
+    req.user = { name, userId, role };
     next();
   } catch (error) {
-    throw new UnauthenticatedError(
-      "Authentication Invalid! Token verification failed"
-    );
+    throw new CustomError.UnauthenticatedError('Authentication Invalid');
   }
 };
 
-module.exports = authenticateUser;
+const authorizePermissions = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      throw new CustomError.UnauthorizedError(
+        'Unauthorized to access this route'
+      );
+    }
+    next();
+  };
+};
+
+module.exports = {
+  authenticateUser,
+  authorizePermissions,
+};

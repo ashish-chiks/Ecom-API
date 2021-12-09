@@ -20,7 +20,7 @@ const ProductSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      default: 'https://res.cloudinary.com/dstfdwmnu/image/upload/v1638446877/sample.jpg',
+      default: '/uploads/example.jpeg',
     },
     category: {
       type: String,
@@ -67,19 +67,18 @@ const ProductSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
-// , toJSON: { virtuals: true }, toObject: { virtuals: true }
 
-// ProductSchema.virtual('reviews', {
-//   ref: 'Review',
-//   localField: '_id',
-//   foreignField: 'product',
-//   justOne: false,
-// });
+ProductSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'product',
+  justOne: false,
+});
 
-// ProductSchema.pre('remove', async function (next) {
-//   await this.model('Review').deleteMany({ product: this._id });
-// });
+ProductSchema.pre('remove', async function (next) {
+  await this.model('Review').deleteMany({ product: this._id });
+});
 
 module.exports = mongoose.model('Product', ProductSchema);
